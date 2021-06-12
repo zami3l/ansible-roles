@@ -1,0 +1,58 @@
+---
+
+- include_vars:
+    vars/default.yml
+
+- name: Create new groups
+  group:
+    name: "{{ item.name }}"
+    gid: "{{ item.gid }}"
+    state: present
+  loop: "{{ GROUPS }}"
+
+- name: Create new users
+  user:
+    name: "{{ item.name }}"
+    uid: "{{ item.uid }}"
+    groups: "{{ item.group }}"
+    state: present
+  loop: "{{ USERS }}"
+
+- name: Create /etc/ssh/authorized_keys/ folder
+  file:
+    path: /etc/ssh/authorized_keys
+    state: directory
+    mode: 0755
+
+- name: Add ssh keys users in /etc/ssh/authorized_keys/
+  copy:
+    src: "{{ item.path_ssh_keys }}"
+    dest: "/etc/ssh/authorized_keys/{{ item.name }}"
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+    mode: 0600
+  loop: "{{ PUBKEY }}"
+
+- name: Configuration ssh
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: "^(#* *%*)?{{ item.name }}"
+    line: "{{ item.name }} {{ item.value }}"
+  loop:
+    - { name: Port, value: 22 }
+    - { name: PermitRootLogin, value: "no" }
+    - { name: PubkeyAuthentication, value: "yes" }
+    - { name: AuthorizedKeysFile, value: "/etc/ssh/authorized_keys/%u" }
+    - { name: PasswordAuthentication, value: "yes" }
+    - { name: KerberosAuthentication, value: "no" }
+    - { name: GSSAPIAuthentication, value: "no" }
+  notify:
+    - restart_sshd
+
+- name: Allow wheel group to use sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^(#* *%*)?wheel'
+    line: '%wheel ALL=(ALL) ALL'

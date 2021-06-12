@@ -11,7 +11,7 @@ OS available
 | OS | Test |
 | - | - |
 | ArchLinux | :heavy_check_mark: Validated |
-| Debian | :hourglass: In Progress |
+| Debian | :heavy_check_mark: Validated |
 | OpenBSD | :hourglass: In Progress |
 | Redhat | :hourglass: In Progress |
 

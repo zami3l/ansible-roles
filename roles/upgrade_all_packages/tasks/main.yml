@@ -1,31 +1,72 @@
 ---
 
-- name: Upgrade all packages on ArchLinux
-  pacman:
-    update_cache: yes
-    upgrade: yes
+#####################
+#     ArchLinux     #
+#####################
+
+- block:
+
+  - name: Upgrade all packages on ArchLinux
+    pacman:
+      update_cache: yes
+      upgrade: yes
+
   when: ansible_facts['os_family'] == 'Archlinux'
 
-- name: Upgrade all packages on Debian
-  apt:
-    name: "*"
-    state: latest
+#####################
+#       Debian      #
+#####################
+
+- block:
+
+  - name: Upgrade all packages on Debian
+    apt:
+      upgrade: dist
+      update_cache: yes
+      autoremove: yes
+      autoclean: yes
+
+  - name: Check update packages
+    shell: grep -E "^$(date +%Y-%m-%d) .+ upgrade" /var/log/dpkg.log | cut -d " " -f 3-
+    register: packages_update
+
+  - name: Show packages
+    debug:
+      msg: "{{ packages_update.stdout_lines }}"
+
   when: ansible_facts['os_family'] == 'Debian'
 
-- name: Update all packages on OpenBSD
-  openbsd_pkg:
-    name: '*'
-    state: latest
+#####################
+#      OpenBSD      #
+#####################
+
+- block:
+
+  - name: Update all packages on OpenBSD
+    openbsd_pkg:
+      name: '*'
+      state: latest
+
   when: ansible_facts['os_family'] == 'OpenBSD'
 
-- name: Upgrade all packages on Family RedHat 8 or Fedora
-  dnf:
-    name: '*'
-    state: latest
+#####################
+#       RedHat      #
+#####################
+
+- block:
+
+  - name: Upgrade all packages on Family RedHat 8 or Fedora
+    dnf:
+      name: '*'
+      state: latest
+
   when: (ansible_facts['os_family'] == 'RedHat' and ansible_facts['distribution_major_version'] == '8') or ansible_facts['distribution'] == 'Fedora'
 
-- name: Upgrade all packages on Family RedHat 7
-  yum:
-    name: '*'
-    state: latest
+- block:
+
+  - name: Upgrade all packages on Family RedHat 7
+    yum:
+      name: '*'
+      state: latest
+
   when: ansible_facts['os_family'] == 'RedHat' and ansible_facts['distribution_major_version'] == '7'

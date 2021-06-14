@@ -1,0 +1,13 @@
+all:
+  children:
+    infra:
+      hosts:
+        rpi1: {}
+        rpi2: {}
+        rpi3: {}
+        nas: {}
+    rpi:
+      hosts:
+        rpi1: {}
+        rpi2: {}
+        rpi3: {}

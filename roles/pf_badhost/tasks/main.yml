@@ -1,0 +1,76 @@
+---
+
+- name: Create user : _pfbadhost
+  user:
+    name: _pfbadhost
+    groups: _pfbadhost
+    shell: /sbin/nologin
+    home: /var/empty
+    state: present
+
+- name: Add binary : pf-badhost.sh
+  get_url:
+    url: https://geoghegan.ca/pub/pf-badhost/latest/pf-badhost.sh
+    dest: /usr/local/bin/pf-badhost
+    mode: 0755
+    owner: root
+    group: wheel
+
+- name: Create log directory
+  file:
+    path: /var/log/pf-badhost
+    state: directory
+    mode: 0755
+    owner: root
+    group: wheel
+
+- name: Create required files
+  file:
+    path: "{{ item }}"
+    state: touch
+    mode: 0640
+    onwer: _pfbadhost
+    group: wheel
+  loop:
+      - /etc/pf-badhost.txt
+      - /var/log/pf-badhost/pf-badhost.log
+      - /var/log/pf-badhost/pf-badhost.log.0.gz
+
+- name: Install doas oksh mawk
+  pkgng:
+    name: doas, oksh, mawk
+    state: present
+
+- name: Create symbolic link
+  file:
+    path: /usr/local/bin/oksh
+    dest: /usr/local/bin/ksh
+    owner: root
+    group: wheel
+    state: link
+
+- name: Create configuration doas
+  copy:
+    src: /usr/local/etc/doas.conf.sample
+    dest: /usr/local/etc/doas.conf
+    owner: root
+    group: wheel
+    force: no
+
+- name: read the passwd file
+    shell: cat /usr/local/etc/doas.conf
+    register: check_permit_pfbadhost
+
+- name: Add rules for configuration doas
+  blockinfile:
+    path: /usr/local/etc/doas.conf
+    block: |
+      # 
+      # Pf-Badhost
+      permit root
+	  permit nopass _pfbadhost cmd /sbin/pfctl args -nf /etc/pf.conf
+	  permit nopass _pfbadhost cmd /sbin/pfctl args -t pfbadhost -T replace -f /etc/pf-badhost.txt
+	  # Optional rule for authlog scanning
+	  permit nopass _pfbadhost cmd /usr/bin/bzcat args -f /var/log/auth.log /var/log/auth.log.0.bz2
+  when: check_permit_pfbadhost.stdout.find('Pf-Badhost') != -1
+

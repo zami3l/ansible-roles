@@ -1,14 +1,13 @@
 ---
 
-- name: Create user : _pfbadhost
+- name: Create user _pfbadhost
   user:
     name: _pfbadhost
-    groups: _pfbadhost
     shell: /sbin/nologin
     home: /var/empty
     state: present
 
-- name: Add binary : pf-badhost.sh
+- name: Add binary pf-badhost.sh
   get_url:
     url: https://geoghegan.ca/pub/pf-badhost/latest/pf-badhost.sh
     dest: /usr/local/bin/pf-badhost
@@ -29,7 +28,7 @@
     path: "{{ item }}"
     state: touch
     mode: 0640
-    onwer: _pfbadhost
+    owner: _pfbadhost
     group: wheel
   loop:
       - /etc/pf-badhost.txt
@@ -43,7 +42,7 @@
 
 - name: Create symbolic link
   file:
-    path: /usr/local/bin/oksh
+    src: /usr/local/bin/oksh
     dest: /usr/local/bin/ksh
     owner: root
     group: wheel
@@ -55,34 +54,22 @@
     dest: /usr/local/etc/doas.conf
     owner: root
     group: wheel
+    remote_src: yes
     force: no
 
-- name: read the passwd file
-    shell: cat /usr/local/etc/doas.conf
-    register: check_permit_pfbadhost
+- name: Check if permit Pf-Badhost exists
+  shell: cat /usr/local/etc/doas.conf
+  register: check_permit
 
 - name: Add rules for configuration doas
   blockinfile:
     path: /usr/local/etc/doas.conf
+    marker: "# {mark} Pf-Badhost"
     block: |
-      # 
-      # Pf-Badhost
       permit root
       permit nopass _pfbadhost cmd /sbin/pfctl args -nf /etc/pf.conf
       permit nopass _pfbadhost cmd /sbin/pfctl args -t pfbadhost -T replace -f /etc/pf-badhost.txt
       # Optional rule for authlog scanning
       permit nopass _pfbadhost cmd /usr/bin/bzcat args -f /var/log/auth.log /var/log/auth.log.0.bz2
-  when: check_permit_pfbadhost.stdout.find('Pf-Badhost') != -1
+  when: check_permit.stdout.find('Pf-Badhost') == -1
 
-- name: Read pf.conf
-    shell: /etc/pf.conf
-    register: check_pf_conf
-
-- name: Check if /etc/pf.conf is correctly
-    debug:
-      msg: "{{ item.message }}"
-    when: check_pf_conf.stdout.find("{{ item.when }}") != -1
-    loop:
-        - { when: "set limit table-entries", message: "Please, add to pf.conf : set limit table-entries 400000" }
-        - { when: "table <pfbadhost>", message: "Please, add to pf.conf : table <pfbadhost> persist file \"/etc/pf-badhost.txt\"" }
-        - { when: "block quick on egress from <t_pfbadhos>", message: "Please, add to pf.conf : block quick on egress from <t_pfbadhos>" }

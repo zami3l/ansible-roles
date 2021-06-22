@@ -73,3 +73,26 @@
       permit nopass _pfbadhost cmd /usr/bin/bzcat args -f /var/log/auth.log /var/log/auth.log.0.bz2
   when: check_permit.stdout.find('Pf-Badhost') == -1
 
+- name: Create sub-rules pf directory
+  file:
+    path: /etc/pfsub
+    state: directory
+    mode: 0640
+    owner: root
+    group: wheel
+
+- name: Add sub-rules pfBadHost
+  copy: 
+    dest: /etc/pfsub/pfbadhost.conf
+    content: |
+        set limit table-entries 400000
+        table <pfbadhost> persist file "/etc/pf-badhost.txt"
+        block in quick on egress from <pfbadhost>
+        block out quick on egress to <pfbadhost>
+
+- name: Include pfBadHost on pf.conf
+  lineinfile:
+    path: /etc/pf.conf
+    regexp: '^include "/etc/pfsub/pfbadhost.conf"'
+    insertafter: '[i|I]nclude'
+    line: include "/etc/pfsub/pfbadhost.conf"

@@ -87,12 +87,37 @@
     content: |
         set limit table-entries 400000
         table <pfbadhost> persist file "/etc/pf-badhost.txt"
-        block in quick on egress from <pfbadhost>
-        block out quick on egress to <pfbadhost>
+        block in quick on $iface_wan from <pfbadhost>
+        block out quick on $iface_wan to <pfbadhost>
 
 - name: Include pfBadHost on pf.conf
   lineinfile:
     path: /etc/pf.conf
     regexp: '^include "/etc/pfsub/pfbadhost.conf"'
-    insertafter: '[i|I]nclude'
+    insertafter: '[i|I]nclude tables'
     line: include "/etc/pfsub/pfbadhost.conf"
+  notify:
+      - reload_pf_rules
+
+- name: reload_pf_rules
+  shell:
+    cmd: pfctl -f /etc/pf.conf
+  register: output_reload_rules
+  ignore_errors: yes
+  notify:
+      - upgrade_ip_list
+
+- name: load_pf_module
+  shell: kldload -n pf
+  when: '"No such file or directory" in output_reload_rules.stderr'
+  notify:
+      - reload_pf_rules
+
+- name: Add crontab for upgrade ip address list
+  cron:
+    name: Upgrade ip address list pf-badhost
+    minute: "0"
+    hour: "0"
+    job: "SHELL=/bin/sh pf-badhost -O freebsd"
+    user: _pfbadhost
+

@@ -1,2 +1,9 @@
 ---
-# handlers file for pf_badhost
+
+- name: upgrade_ip_list
+  shell:
+    cmd: su -m _pfbadhost -c "pf-badhost -O freebsd"
+
+- name: reload_pf_rules
+  shell:
+    cmd: pfctl -f /etc/pf.conf

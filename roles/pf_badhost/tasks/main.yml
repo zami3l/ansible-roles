@@ -24,12 +24,13 @@
     group: wheel
 
 - name: Create required files
-  file:
-    path: "{{ item }}"
-    state: touch
+  copy:
+    content: ""
+    dest: "{{ item }}"
     mode: 0640
     owner: _pfbadhost
     group: wheel
+    force: no
   loop:
       - /etc/pf-badhost.txt
       - /var/log/pf-badhost/pf-badhost.log

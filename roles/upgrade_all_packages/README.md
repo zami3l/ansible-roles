@@ -13,6 +13,7 @@ OS available
 | ArchLinux | :heavy_check_mark: Validated |
 | Debian | :heavy_check_mark: Validated |
 | OpenBSD | :hourglass: In Progress |
+| FreeBSD | :hourglass: In Progress |
 | Redhat | :hourglass: In Progress |
 
 

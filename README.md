@@ -25,7 +25,7 @@ Import playbook.yml :
 ```yaml
 ---
 - name: Example to use collection
-  collection:
+  collections:
   - ansible.sysadmin
 
   roles:

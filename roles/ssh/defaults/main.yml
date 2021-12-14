@@ -1,0 +1,15 @@
+---
+
+PORT_SSH: 22
+
+GROUPS:
+  - name: zami3l
+  - name: wheel
+
+USERS:
+  - name: zami3l
+    group: zami3l,wheel
+
+PUBKEY:
+  - name: zami3l
+    path_ssh_keys: files/zami3l.pub

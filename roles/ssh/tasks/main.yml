@@ -1,19 +1,14 @@
 ---
 
-- include_vars:
-    vars/default.yml
-
 - name: Create new groups
   group:
     name: "{{ item.name }}"
-    gid: "{{ item.gid }}"
     state: present
   loop: "{{ GROUPS }}"
 
 - name: Create new users
   user:
     name: "{{ item.name }}"
-    uid: "{{ item.uid }}"
     groups: "{{ item.group }}"
     state: present
   loop: "{{ USERS }}"
@@ -40,7 +35,7 @@
     regexp: "^(#* *%*)?{{ item.name }}"
     line: "{{ item.name }} {{ item.value }}"
   loop:
-    - { name: Port, value: 22 }
+    - { name: Port, value: "{{ PORT_SSH }}" }
     - { name: PermitRootLogin, value: "no" }
     - { name: PubkeyAuthentication, value: "yes" }
     - { name: AuthorizedKeysFile, value: "/etc/ssh/authorized_keys/%u" }
@@ -54,5 +49,16 @@
   lineinfile:
     dest: /etc/sudoers
     state: present
+    create: yes
     regexp: '^(#* *%*)?wheel'
     line: '%wheel ALL=(ALL) ALL'
+  when: ansible_distribution != 'OpenBSD'
+
+- name: Allow wheel group to use doas
+  lineinfile:
+    dest: /etc/doas.conf
+    state: present
+    create: yes
+    regexp: '^(#* *%*)?permit: wheel'
+    line: 'permit :wheel'
+  when: ansible_distribution == 'OpenBSD'

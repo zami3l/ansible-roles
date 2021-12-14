@@ -1,0 +1,12 @@
+---
+
+LIST_TOOLS_LINUX:
+  - sudo
+  - vim
+  - dnsutils
+  - tcpdump
+  - htop
+
+LIST_TOOLS_OPENBSD:
+  - vim--no_x11
+  - htop

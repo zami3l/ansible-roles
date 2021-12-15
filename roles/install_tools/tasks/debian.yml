@@ -1,7 +1,0 @@
----
-
-- name: Installation des outils Linux
-  apt:
-    name: '{{ item }}'
-    state: present
-  loop: '{{ LIST_TOOLS_LINUX }}'

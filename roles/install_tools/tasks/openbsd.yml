@@ -1,7 +1,0 @@
----
-
-- name: Installation des outils OpenBSD
-  openbsd_pkg:
-    name: '{{ item }}'
-    state: present
-  loop: '{{ LIST_TOOLS_OPENBSD }}'

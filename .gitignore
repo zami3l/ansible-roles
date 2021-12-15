@@ -1,3 +1,4 @@
 
 *.tar.gz
-roles/ssh/files/*
+ssh/files/*
+.travis.yml

@@ -1,0 +1,70 @@
+---
+
+- name: Installation des packages
+  openbsd_pkg:
+    name: rtorrent
+    state: latest
+  when: ansible_distribution == 'OpenBSD'
+
+- name: Installation de rtorrent
+  apt:
+    name: rtorrent
+    state: latest
+  when: ansible_distribution == 'Debian'
+
+- name: Ajout groupe de service {{ GROUP }}
+  group:
+    name: "{{ GROUP }}"
+    state: present
+
+- name: Ajout compte de service {{ USER }}
+  user:
+    name: "{{ USER }}"
+    groups: "{{ GROUP }}"
+    state: present
+
+- name: Creation des dossiers par defaut
+  file:
+    path: "{{ PATH_RTORRENT }}/{{ item }}"
+    state: directory
+    owner: "{{ USER }}"
+    group: "{{ GROUP }}"
+    mode: 0600
+  loop:
+    - download
+    - session
+    - torrent
+    - watch
+
+- name: Creation du fichier de configuration
+  copy:
+    src: /usr/local/share/examples/rtorrent/rtorrent.rc
+    dest: "{{ PATH_RTORRENT }}/.rtorrent.rc"
+    remote_src: yes
+    owner: "{{ USER }}"
+    group: "{{ GROUP }}"
+    force: no
+    mode: 0600
+
+- name: Configuration de rtorrent
+  lineinfile:
+    dest: "{{ PATH_RTORRENT }}/.rtorrent.rc"
+    state: present
+    regexp: "^(#* *%*)?{{ item.name }}"
+    line: "{{ item.name }} = {{ item.value }}"
+  loop:
+    - { name: download_rate, value: 0 }
+    - { name: upload_rate, value: 0 }
+    - { name: directory, value: "{{ PATH_RTORRENT }}/download" }
+    - { name: session, value: "{{ PATH_RTORRENT }}/session" }
+    - { name: schedule, value: "watch_directory,5,5,load_start={{ PATH_RTORRENT }}/watch/*.torrent" }
+    - { name: ip, value: "{{ IP_PUBLIC }}" }
+    - { name: bind, value: "{{ IP_LOCAL }}" }
+    - { name: port_range, value: "{{ RANGE_PORT_PUBLIC }}" }
+    - { name: port_random, value: "no" }
+    - { name: check_hash, value: "yes" }
+    - { name: use_udp_trackers, value: "yes" }
+    - { name: encryption, value: "allow_incoming,try_outgoing,enable_retry" }
+    - { name: dht, value: "auto" }
+    - { name: dht_port, value: "{{ PORT_DHT }}" }
+    - { name: peer_exchange, value: "yes" }

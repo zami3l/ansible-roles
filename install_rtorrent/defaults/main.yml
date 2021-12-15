@@ -1,0 +1,12 @@
+---
+
+# Global
+USER: _rtorrent
+GROUP: _rtorrent
+
+# Rtorrent
+PATH_RTORRENT: /data/rtorrent
+IP_PUBLIC: 127.0.0.1
+IP_LOCAL: 127.0.0.1
+RANGE_PORT_PUBLIC: 1000-1000
+PORT_DHT: 1001

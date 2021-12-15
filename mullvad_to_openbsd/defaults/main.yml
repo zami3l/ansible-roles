@@ -1,0 +1,5 @@
+---
+
+PATH_DIR_WIREGUARD: /etc/wireguard
+SRC_FILE_MULLVAD: $HOME/mlvd-fr10.conf
+INTERFACE_WIREGUARD: wg0

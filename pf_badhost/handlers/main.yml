@@ -2,7 +2,7 @@
 
 - name: upgrade_ip_list
   shell:
-    cmd: su -m _pfbadhost -c "pf-badhost -O freebsd"
+    cmd: doas -u _pfbadhost pf-badhost -O openbsd
 
 - name: reload_pf_rules
   shell:

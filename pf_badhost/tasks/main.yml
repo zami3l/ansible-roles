@@ -5,6 +5,7 @@
     name: _pfbadhost
     shell: /sbin/nologin
     home: /var/empty
+    create_home: no
     state: present
 
 - name: Add binary pf-badhost.sh
@@ -13,7 +14,7 @@
     dest: /usr/local/bin/pf-badhost
     mode: 0755
     owner: root
-    group: wheel
+    group: bin
 
 - name: Create log directory
   file:
@@ -36,43 +37,28 @@
       - /var/log/pf-badhost/pf-badhost.log
       - /var/log/pf-badhost/pf-badhost.log.0.gz
 
-- name: Install doas oksh mawk
-  pkgng:
-    name: doas, oksh, mawk
+- name: Install ripgrep mawk
+  openbsd_pkg:
+    name: ripgrep, mawk
     state: present
 
-- name: Create symbolic link
-  file:
-    src: /usr/local/bin/oksh
-    dest: /usr/local/bin/ksh
-    owner: root
-    group: wheel
-    state: link
-
 - name: Create configuration doas
-  copy:
-    src: /usr/local/etc/doas.conf.sample
-    dest: /usr/local/etc/doas.conf
+  file:
+    path: /etc/doas.conf
     owner: root
     group: wheel
-    remote_src: yes
-    force: no
-
-- name: Check if permit Pf-Badhost exists
-  shell: cat /usr/local/etc/doas.conf
-  register: check_permit
+    state: touch
 
 - name: Add rules for configuration doas
   blockinfile:
-    path: /usr/local/etc/doas.conf
+    path: /etc/doas.conf
     marker: "# {mark} Pf-Badhost"
     block: |
-      permit root
+      permit nopass root as _pfbadhost
       permit nopass _pfbadhost cmd /sbin/pfctl args -nf /etc/pf.conf
       permit nopass _pfbadhost cmd /sbin/pfctl args -t pfbadhost -T replace -f /etc/pf-badhost.txt
       # Optional rule for authlog scanning
-      permit nopass _pfbadhost cmd /usr/bin/bzcat args -f /var/log/auth.log /var/log/auth.log.0.bz2
-  when: check_permit.stdout.find('Pf-Badhost') == -1
+      permit nopass _pfbadhost cmd /usr/bin/zcat args -f /var/log/authlog /var/log/authlog.0.gz
 
 - name: Create sub-rules pf directory
   file:
@@ -86,10 +72,9 @@
   copy: 
     dest: /etc/pfsub/pfbadhost.conf
     content: |
-        set limit table-entries 400000
         table <pfbadhost> persist file "/etc/pf-badhost.txt"
-        block in quick on $iface_wan from <pfbadhost>
-        block out quick on $iface_wan to <pfbadhost>
+        block in quick on $wan_if from <pfbadhost>
+        block out quick on $wan_if to <pfbadhost>
 
 - name: Include pfBadHost on pf.conf
   lineinfile:
@@ -108,17 +93,11 @@
   notify:
       - upgrade_ip_list
 
-- name: load_pf_module
-  shell: kldload -n pf
-  when: '"No such file or directory" in output_reload_rules.stderr'
-  notify:
-      - reload_pf_rules
-
 - name: Add crontab for upgrade ip address list
   cron:
     name: Upgrade ip address list pf-badhost
     minute: "0"
-    hour: "0"
-    job: "SHELL=/bin/sh pf-badhost -O freebsd"
+    hour: "1"
+    job: "SHELL=/bin/sh pf-badhost -O openbsd"
     user: _pfbadhost
 

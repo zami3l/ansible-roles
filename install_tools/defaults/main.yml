@@ -10,3 +10,4 @@ LIST_TOOLS_LINUX:
 LIST_TOOLS_OPENBSD:
   - vim--no_x11
   - htop
+  - wget

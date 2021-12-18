@@ -21,6 +21,8 @@
   user:
     name: "{{ USER }}"
     groups: "{{ GROUP }}"
+    create_home: no
+    home: "{{ PATH_RTORRENT }}"
     state: present
 
 - name: Creation des dossiers par defaut
@@ -29,7 +31,7 @@
     state: directory
     owner: "{{ USER }}"
     group: "{{ GROUP }}"
-    mode: 0600
+    mode: 0700
   loop:
     - download
     - session
@@ -68,3 +70,4 @@
     - { name: dht, value: "auto" }
     - { name: dht_port, value: "{{ PORT_DHT }}" }
     - { name: peer_exchange, value: "yes" }
+

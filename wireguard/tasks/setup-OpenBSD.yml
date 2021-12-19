@@ -1,0 +1,59 @@
+---
+
+- name: Installation de Wireguard
+  openbsd_pkg:
+    name: wireguard-tools
+    state: present
+
+- name: Activer le transfert de paquets IPv4
+  sysctl:
+    name: net.inet.ip.forwarding
+    value: '1'
+    sysctl_set: yes
+    state: present
+    reload: yes
+
+- name: Création du dossier de configuration
+  file:
+    path: "{{ PATH_WIREGUARD }}"
+    state: directory
+    mode: '0700'
+
+- name: Création de la clé privée du serveur
+  shell:
+    cmd: wg genkey > secret.key
+    chdir: "{{ PATH_WIREGUARD }}"
+
+- name: Modification des permissions sur la clé privée
+  file:
+    path: "{{ PATH_WIREGUARD }}/secret.key"
+    state: file
+    mode: '0600'
+
+- name: Création de la clé public
+  shell:
+    cmd: wg pubkey < secret.key > public.key
+    chdir: "{{ PATH_WIREGUARD }}"
+
+- name: Création du fichier de configuration
+  blockinfile:
+    path: "{{ PATH_WIREGUARD }}"
+    create: yes
+    block: |
+      [Interface]
+      PrivateKey = "{{ lookup('file', '{{ PATH_WIREGUARD }}/secret.key') }}"
+      ListenPort = 51821
+
+      [Peer]
+      PublicKey = PLEASE ADD YOUR PUBLIC KEY
+      AllowedIPs = "{{ CLIENT_IP }}"/32
+
+- name: Création de l'interface "{{ NAME_INTERFACE_WIREGUARD }}"
+  blockinfile:
+    path: "/etc/hostname.{{ NAME_INTERFACE_WIREGUARD }}"
+    create: yes
+    block: |
+      inet "{{ SERVEUR_IP }}" 255.255.255.255
+      up
+
+      !/usr/local/bin/wg setconf {{ NAME_INTERFACE_WIREGUARD }} {{ PATH_WIREGUARD }}/{{ NAME_INTERFACE_WIREGUARD }}.conf

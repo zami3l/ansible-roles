@@ -50,7 +50,9 @@
     create: yes
     marker: "# {mark} ANSIBLE - Interface {{ INTERFACE_WIREGUARD }}"
     block: |
+      {{ 'rdomain ' + NUMBER_RDOMAIN|string if NUMBER_RDOMAIN is defined }}
       inet {{ IP_INTERFACE_WIREGUARD.stdout }} 255.255.255.255
       up
 
       !/usr/local/bin/wg setconf {{ INTERFACE_WIREGUARD }} {{ PATH_DIR_WIREGUARD }}/{{ INTERFACE_WIREGUARD }}.conf
+      {{ '!route -T' + NUMBER_RTABLE|string + ' add default ' + IP_INTERFACE_WIREGUARD.stdout if NUMBER_RTABLE is defined }}

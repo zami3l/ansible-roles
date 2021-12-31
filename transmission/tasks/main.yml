@@ -1,0 +1,58 @@
+---
+
+- name: Installation des packages
+  openbsd_pkg:
+    name: transmission
+    state: latest
+
+- name: Changement du repertoire du service _transmission
+  user:
+    name: _transmission
+    home: "{{ PATH_DIR_TRANSMISSION }}"
+
+- name: Verification de la presence de l'arborescence de configuration
+  stat:
+    path: "{{ PATH_CONF_TRANSMISSION }}"
+  register: stat_conf
+
+- name: Creation de l'arborescence de configuration
+  service:
+    name: transmission_daemon
+    state: started
+  when: not stat_conf.stat.exists
+
+- service:
+    name: transmission_daemon
+    state: stopped
+  when: not stat_conf.stat.exists
+
+- name: Creation des dossiers par defaut
+  file:
+    path: "{{ PATH_DIR_TRANSMISSION }}/{{ item }}"
+    state: directory
+    owner: _transmission
+    group: _transmission
+    mode: 0700
+  loop:
+    - downloads
+    - incomplete
+    - torrents
+
+- name: Configuration de transmission
+  lineinfile:
+    dest: "{{ PATH_CONF_TRANSMISSION }}"
+    state: present
+    regexp: "^(#* *%*)?\"{{ item.name }}"
+    insertafter: "^.*\".*,"
+    line: "\t\"{{ item.name }}\": {{ item.value }},"
+  loop:
+    - { name: download-dir, value: "\"{{ PATH_DIR_TRANSMISSION }}/downloads\"" }
+    - { name: incomplete-dir, value: "\"{{ PATH_DIR_TRANSMISSION }}/incomplete\"" }
+    - { name: incomplete-dir-enabled, value: true }
+    - { name: watch-dir, value: "\"{{ PATH_DIR_TRANSMISSION }}/torrents\"" }
+    - { name: watch-dir-enabled, value: true }
+    - { name: bind-address-ipv4, value: "\"{{ IP_LISTEN_TRANSMISSION }}\"" }
+    - { name: peer-port, value: {{ PORT_TRANSMISSION }} }
+    - { name: rpc-enabled, value: {{ ENABLE_WEB_TRANSMISSION }} }
+    - { name: rpc-bind-address, value: "\"{{ IP_WEB_LISTEN_TRANSMISSION }}\"" }
+    - { name: rpc-port, value: {{ PORT_WEB_TRANSMISSION }} }

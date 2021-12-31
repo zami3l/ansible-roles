@@ -1,0 +1,12 @@
+---
+
+# Transmission
+PATH_DIR_TRANSMISSION: /data/transmission
+PATH_CONF_TRANSMISSION: /data/transmission/.config/transmission-daemon/settings.json
+
+IP_LISTEN_TRANSMISSION: 127.0.0.1
+PORT_TRANSMISSION: 1000
+
+ENABLE_WEB_TRANSMISSION: true
+IP_WEB_LISTEN_TRANSMISSION: 127.0.0.1
+PORT_WEB_TRANSMISSION: 1001

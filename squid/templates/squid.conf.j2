@@ -1,0 +1,87 @@
+#
+# Squid configuration
+#
+
+# PID
+pid_filename /var/run/squid-{{ NAME_SQUID }}.pid
+
+# Default Local networks
+{% for network in DEFAULT_ACL_LOCALNET %}
+acl localnet src {{ network.net }}      # {{ network.comment }}
+{% endfor %}
+
+{% if ACL_NET is defined %}
+# Other networks
+{% for network in ACL_NET %}
+acl {{ network.name }} src {{ network.net }}      # {{ network.comment }}
+{% endfor %}
+{% endif %}
+
+# Default SSL ports
+{% for ssl_port in DEFAULT_ACL_PORT_SSL %}
+acl SSL_ports port {{ ssl_port.port }}       # {{ ssl_port.comment }}
+{% endfor %}
+
+{% if ACL_PORT_SSL is defined %}
+# Other SSL ports
+{% for ssl_port in ACL_PORT_SSL %}
+acl SSL_ports port {{ ssl_port.port }}       # {{ ssl_port.comment }}
+{% endfor %}
+{% endif %}
+
+# Default Safe ports
+{% for safe_port in DEFAULT_ACL_PORT_SAFE %}
+acl Safe_ports port {{ safe_port.port }}       # {{ safe_port.comment }}
+{% endfor %}
+
+{% if ACL_PORT_SAFE is defined %}
+# Other Safe ports
+{% for safe_port in ACL_PORT_SAFE %}
+acl Safe_ports port {{ safe_port.port }}       # {{ safe_port.comment }}
+{% endfor %}
+{% endif %}
+
+{% if DEFAULT_ACL_PORT_SAFE is defined %}
+# Deny requests to certain unsafe ports
+http_access deny !Safe_ports
+{% endif %}
+
+{% if DEFAULT_ACL_PORT_SSL is defined %}
+# Deny CONNECT to other than secure SSL ports
+http_access deny CONNECT !SSL_ports
+{% endif %}
+
+
+{% if DEFAULT_ACL_LOCALNET is defined %}
+# Allow localnet
+http_access allow localnet
+http_access allow localhost
+{% endif %}
+
+{% if HTTP_ACCESS is defined %}
+# Access network
+{% for access in HTTP_ACCESS %}
+http_access {{ access.action }} {{ access.net }}        # {{ access.comment }}
+{% endfor %}
+{% endif %}
+
+# Deny all other access to this proxy
+http_access deny all
+
+# Squid normally listens to port 3128
+http_port {{ PORT_SQUID }}
+
+# Leave coredumps in the first cache dir
+coredump_dir /var/squid/cache
+
+# Default refresh_pattern entries
+{% for refresh_pattern in DEFAULT_REFRESH_PATTERN %}
+{{ refresh_pattern }}
+{% endfor %}
+
+{% if REFRESH_PATTERN is defined %}
+# Refresh_pattern entries
+{% for refresh_pattern in REFRESH_PATTERN %}
+{{ refresh_pattern }}
+{% endfor %}
+{% endif %}

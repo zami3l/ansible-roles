@@ -1,0 +1,12 @@
+---
+
+NAME_SQUID: user
+PORT_SQUID: 1999
+RTABLE_SQUID: 1
+
+ACL_NET:
+  - { name: internet, net: all, comment: Internet }
+ACL_PORT_SAFE:
+  - { port: 1025-65535, comment: unregistered ports }
+HTTP_ACCESS:
+  - { action: allow, net: internet, comment: Allow Internet }

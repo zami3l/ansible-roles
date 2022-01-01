@@ -1,0 +1,25 @@
+---
+
+NAME_SERVICE: squid_{{ NAME_SQUID }}
+PATH_SQUID: /etc/squid
+PATH_CONF_SQUID: /etc/squid/squid_{{ NAME_SQUID }}.conf
+
+DEFAULT_ACL_LOCALNET:
+  - { net: 0.0.0.1-0.255.255.255, comment: 'RFC 1122 "this" network (LAN)' }
+  - { net: 10.0.0.0/8, comment: 'RFC 1918 local private network (LAN)' }
+  - { net: 172.16.0.0/12, comment: 'RFC 1918 local private network (LAN)' }
+  - { net: 192.168.0.0/16, comment: 'RFC 1918 local private network (LAN)' }
+
+DEFAULT_ACL_PORT_SSL:
+  - { port: 443, comment: https }
+
+DEFAULT_ACL_PORT_SAFE:
+  - { port: 80, comment: http }
+  - { port: 21, comment: ftp }
+  - { port: 443, comment: https }
+
+DEFAULT_REFRESH_PATTERN:
+  - 'refresh_pattern ^ftp:       1440    20% 10080'
+  - 'refresh_pattern ^gopher:	1440	0%	1440'
+  - 'refresh_pattern -i (/cgi-bin/|\?) 0	0%	0'
+  - 'refresh_pattern .		0	20%	4320'

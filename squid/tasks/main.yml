@@ -1,0 +1,46 @@
+---
+
+- name: Installation des packages
+  openbsd_pkg:
+    name: squid
+    state: latest
+
+- name: Generation du fichier de configuration {{ NAME_SERVICE }}.conf
+  template:
+    src: squid.conf.j2
+    dest: "{{ PATH_CONF_SQUID }}"
+    owner: root
+    group: wheel
+    mode: 0600
+
+- name: Creation du service squid_{{ NAME_SQUID }}
+  copy:
+    src: /etc/rc.d/squid
+    dest: /etc/rc.d/{{ NAME_SERVICE }}
+    owner: root
+    group: wheel
+    mode: 0555
+    remote_src: yes
+
+- shell: grep -E '^pkg_scripts.*{{ NAME_SERVICE }}' /etc/rc.conf.local
+  changed_when: false
+  failed_when: false
+  register: service_enable
+
+- name: Activation du service {{ NAME_SERVICE }}
+  shell:
+    cmd: rcctl enable {{ NAME_SERVICE }}
+  when: service_enable.rc != 0
+
+- name: Ajout des flags
+  lineinfile:
+    dest: /etc/rc.conf.local
+    regexp: "^{{ NAME_SERVICE }}_flags"
+    line: "{{ NAME_SERVICE }}_flags=-f {{ PATH_CONF_SQUID }}"
+
+- name: Ajout du service dans la rtable {{ RTABLE_SQUID }}
+  lineinfile:
+    dest: /etc/rc.conf.local
+    regexp: "^{{ NAME_SERVICE }}_rtable"
+    line: "{{ NAME_SERVICE }}_rtable={{ RTABLE_SQUID }}"
+  when: RTABLE_SQUID is defined

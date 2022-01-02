@@ -64,6 +64,7 @@
 - name: Recuperation de la cle privee
   shell: cat "{{ path_privatekey }}"
   register: VALUE_WIREGUARD
+  changed_when: false
 
 - name: Creation du fichier de configuration
   template:

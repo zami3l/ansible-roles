@@ -1,5 +1,19 @@
 ---
 
+- set_fact:
+    privatekey: 'srv_sec_{{ NAME_WIREGUARD }}'
+    path_privatekey: '{{ PATH_WIREGUARD }}/srv_sec_{{ NAME_WIREGUARD }}.key'
+    publickey: 'srv_pub_{{ NAME_WIREGUARD }}'
+    path_publickey: '{{ PATH_WIREGUARD }}/srv_pub_{{ NAME_WIREGUARD }}.key'
+  when: TYPE_WIREGUARD == 'server'
+
+- set_fact:
+    privatekey: 'cli_sec_{{ NAME_WIREGUARD }}'
+    path_privatekey: '{{ PATH_WIREGUARD }}/cli_sec_{{ NAME_WIREGUARD }}.key'
+    publickey: 'cli_pub_{{ NAME_WIREGUARD }}'
+    path_publickey: '{{ PATH_WIREGUARD }}/cli_pub_{{ NAME_WIREGUARD }}.key'
+  when: TYPE_WIREGUARD == 'client'
+
 - name: Installation de Wireguard
   openbsd_pkg:
     name: wireguard-tools
@@ -19,41 +33,60 @@
     state: directory
     mode: '0700'
 
-- name: Création de la clé privée du serveur
-  shell:
-    cmd: wg genkey > secret.key
-    chdir: "{{ PATH_WIREGUARD }}"
+- name: Verification d'une cle privee existante
+  stat:
+    path: "{{ path_privatekey }}"
+  register: stat_privatekey
 
-- name: Modification des permissions sur la clé privée
+- name: Creation de la cle privee 
+  shell:
+    cmd: wg genkey > {{ privatekey }}.key
+    chdir: "{{ PATH_WIREGUARD }}"
+  when: not stat_privatekey.stat.exists
+
+- name: Modification des permissions sur la cle privee
   file:
-    path: "{{ PATH_WIREGUARD }}/secret.key"
+    path: "{{ path_privatekey }}"
     state: file
     mode: '0600'
 
-- name: Création de la clé public
+- name: Verification d'une cle public existante
+  stat:
+    path: "{{ path_publickey }}"
+  register: stat_publickey
+
+- name: Creation de la cle public
   shell:
-    cmd: wg pubkey < secret.key > public.key
+    cmd: wg pubkey < {{ privatekey }}.key > {{ publickey }}.key
     chdir: "{{ PATH_WIREGUARD }}"
+  when: not stat_publickey.stat.exists
 
-- name: Création du fichier de configuration
-  blockinfile:
-    path: "{{ PATH_WIREGUARD }}"
-    create: yes
-    block: |
-      [Interface]
-      PrivateKey = "{{ lookup('file', '{{ PATH_WIREGUARD }}/secret.key') }}"
-      ListenPort = 51821
+- name: Recuperation de la cle privee
+  shell: cat "{{ path_privatekey }}"
+  register: VALUE_WIREGUARD
 
-      [Peer]
-      PublicKey = PLEASE ADD YOUR PUBLIC KEY
-      AllowedIPs = "{{ CLIENT_IP }}"/32
+- name: Creation du fichier de configuration
+  template:
+    src: openbsd_server.j2
+    dest: "{{ PATH_WIREGUARD }}/{{ INTERFACE_WIREGUARD }}.conf"
+    owner: root
+    group: wheel
+    mode: 0600
+  when: TYPE_WIREGUARD == 'server'
 
-- name: Création de l'interface "{{ NAME_INTERFACE_WIREGUARD }}"
-  blockinfile:
-    path: "/etc/hostname.{{ NAME_INTERFACE_WIREGUARD }}"
-    create: yes
-    block: |
-      inet "{{ SERVEUR_IP }}" 255.255.255.255
-      up
+- name: Creation du fichier de configuration
+  template:
+    src: openbsd_client.j2
+    dest: "{{ PATH_WIREGUARD }}/{{ INTERFACE_WIREGUARD }}.conf"
+    owner: root
+    group: wheel
+    mode: 0600
+  when: TYPE_WIREGUARD == 'client'
 
-      !/usr/local/bin/wg setconf {{ NAME_INTERFACE_WIREGUARD }} {{ PATH_WIREGUARD }}/{{ NAME_INTERFACE_WIREGUARD }}.conf
+- name: Création de l'interface "{{ INTERFACE_WIREGUARD }}"
+  template:
+    src: openbsd_interface.j2
+    dest: "/etc/hostname.{{ INTERFACE_WIREGUARD }}"
+    owner: root
+    group: wheel
+    mode: 0640

@@ -1,7 +1,13 @@
 ---
 
 PATH_WIREGUARD: /etc/wireguard
-INTERFACE_WIREGUARD: "wg0"
+INTERFACE_WIREGUARD: wg0
+NAME_WIREGUARD: "intersite"
+PORT_WIREGUARD: 51820
+TYPE_WIREGUARD: server
 
-SERVEUR_IP: 10.10.10.1
-CLIENT_IP: 10.10.10.2
+SRV_WIREGUARD:
+  ip: 10.0.0.1
+
+CLI_WIREGUARD:
+  - { ip: 10.0.0.2, comment: 'Client 1', pubkey: BBBB }

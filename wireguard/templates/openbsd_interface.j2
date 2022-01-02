@@ -1,0 +1,19 @@
+{% if RDOMAIN_WIREGUARD is defined %}
+rdomain {{ RDOMAIN_WIREGUARD }}
+{% endif %}
+{% if TYPE_WIREGUARD == 'server' %}
+inet {{ SRV_WIREGUARD.ip }} 255.255.255.248
+{% else %}
+inet {{ CLI_WIREGUARD.ip }} 255.255.255.248
+{% endif %}
+up
+
+!/usr/local/bin/wg setconf {{ INTERFACE_WIREGUARD }} /etc/wireguard/{{ INTERFACE_WIREGUARD }}.conf
+
+{% if RDOMAIN_WIREGUARD is defined %}
+{% if TYPE_WIREGUARD == 'server' %}
+!route -T{{ RDOMAIN_WIREGUARD }} add default {{ SRV_WIREGUARD.ip }}
+{% else %}
+!route -T{{ RDOMAIN_WIREGUARD }} add default {{ CLI_WIREGUARD.ip }}
+{% endif %}
+{% endif %}

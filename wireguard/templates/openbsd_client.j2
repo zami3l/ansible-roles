@@ -1,0 +1,9 @@
+[interface]
+# Private key client
+PrivateKey = {{ VALUE_WIREGUARD.stdout }}
+
+# Server
+[Peer]
+PublicKey = {{ SRV_WIREGUARD.pubkey }}
+Endpoint = {{ SRV_WIREGUARD.ip }}:{{ PORT_WIREGUARD }}
+AllowedIPs = 0.0.0.0/0

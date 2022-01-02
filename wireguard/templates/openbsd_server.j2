@@ -1,0 +1,12 @@
+[interface]
+# Private key server
+PrivateKey = {{ VALUE_WIREGUARD.stdout }}
+ListenPort = {{ PORT_WIREGUARD }}
+
+{% for cli in CLI_WIREGUARD %}
+# {{ cli.comment }}
+[Peer]
+PublicKey = {{ cli.pubkey }}
+AllowedIPs = {{ cli.ip }}/32
+
+{% endfor %}

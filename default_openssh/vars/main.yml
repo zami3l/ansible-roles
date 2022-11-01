@@ -1,0 +1,3 @@
+---
+
+DIR_CONFIG: "{{ '/usr/local/etc/ssh' if ansible_distribution == 'FreeBSD' else '/etc/ssh' }}"

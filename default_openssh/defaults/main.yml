@@ -4,11 +4,10 @@ PORT_SSH: 22
 
 GROUPS:
   - zami3l
-  - wheel
 
 USERS:
   - name: zami3l
-    group: zami3l,wheel
+    group: zami3l
 
 PUBKEY:
   - name: zami3l

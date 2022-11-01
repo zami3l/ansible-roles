@@ -4,3 +4,4 @@
   service:
     name: sshd
     state: restarted
+  when: ansible_distribution != 'FreeBSD'

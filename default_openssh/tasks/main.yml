@@ -13,16 +13,16 @@
     state: present
   loop: "{{ USERS }}"
 
-- name: Creation du repertoire /etc/ssh/authorized_keys/
+- name: Creation du repertoire {{ DIR_CONFIG }}/authorized_keys/
   file:
-    path: /etc/ssh/authorized_keys
+    path: "{{ DIR_CONFIG }}/authorized_keys"
     state: directory
     mode: 0755
 
-- name: Ajout des cles ssh des utilisateurs dans /etc/ssh/authorized_keys/
+- name: Ajout des cles ssh des utilisateurs dans {{ DIR_CONFIG }}/authorized_keys/
   copy:
     src: "{{ item.path_ssh_keys }}"
-    dest: "/etc/ssh/authorized_keys/{{ item.name }}"
+    dest: "{{ DIR_CONFIG }}/authorized_keys/{{ item.name }}"
     owner: "{{ item.name }}"
     group: "{{ item.name }}"
     mode: 0600
@@ -30,7 +30,7 @@
 
 - name: Configuration ssh
   lineinfile:
-    dest: /etc/ssh/sshd_config
+    dest: {{ DIR_CONFIG }}/sshd_config
     state: present
     regexp: "^(#* *%*)?{{ item.name }}"
     line: "{{ item.name }} {{ item.value }}"
@@ -38,27 +38,9 @@
     - { name: Port, value: "{{ PORT_SSH }}" }
     - { name: PermitRootLogin, value: "no" }
     - { name: PubkeyAuthentication, value: "yes" }
-    - { name: AuthorizedKeysFile, value: "/etc/ssh/authorized_keys/%u" }
+    - { name: AuthorizedKeysFile, value: "{{ DIR_CONFIG }}/authorized_keys/%u" }
     - { name: PasswordAuthentication, value: "yes" }
     - { name: KerberosAuthentication, value: "no" }
     - { name: GSSAPIAuthentication, value: "no" }
   notify:
     - restart_sshd
-
-- name: Autorisation groupe wheel a utiliser sudo
-  lineinfile:
-    dest: /etc/sudoers
-    state: present
-    create: yes
-    regexp: '^(#* *%*)?wheel'
-    line: '%wheel ALL=(ALL) ALL'
-  when: ansible_distribution != 'OpenBSD'
-
-- name: Autorisation groupe wheel a utiliser doas
-  lineinfile:
-    dest: /etc/doas.conf
-    state: present
-    create: yes
-    regexp: '^(#* *%*)?permit: wheel'
-    line: 'permit :wheel'
-  when: ansible_distribution == 'OpenBSD'

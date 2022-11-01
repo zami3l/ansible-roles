@@ -2,7 +2,7 @@
 
 - name: Creation des groupes
   group:
-    name: "{{ item.name }}"
+    name: "{{ item }}"
     state: present
   loop: "{{ GROUPS }}"
 
@@ -30,7 +30,7 @@
 
 - name: Configuration ssh
   lineinfile:
-    dest: {{ DIR_CONFIG }}/sshd_config
+    dest: "{{ DIR_CONFIG }}/sshd_config"
     state: present
     regexp: "^(#* *%*)?{{ item.name }}"
     line: "{{ item.name }} {{ item.value }}"

@@ -1,0 +1,29 @@
+---
+
+- name: Installation package openSSH OpenBSD
+  community.general.pkgng:
+    name: openssh-portable
+    state: latest
+
+- name: Configuration openSSH
+  ansible.builtin.include_role:
+    name: default_openssh
+
+- name: Installation package openNTPD
+  community.general.pkgng:
+    name: openntpd
+    state: latest
+
+- name: Configuration openNTPD
+  ansible.builtin.include_role:
+    name: default_openntpd
+
+- name: Activer le chiffrement par défaut du SWAP
+  ansible.builtin.shell: mv /etc/fstab /etc/fstab-`date +%Y%m%d%H%M` && awk -F'\t' '{ if ($3 == "swap" && $1 !~ /.eli/ ) { $1=$1".eli" ; print $0 } else { print $0 } }' /etc/fstab-`date +%Y%m%d%H%M` > /etc/fstab
+  register: enable_swap
+    
+- name: Ajout paramétrage rc.conf
+  community.general.sysrc:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+  loop: "{{ RC_CONF | dict2items }}"

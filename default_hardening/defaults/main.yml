@@ -1,0 +1,8 @@
+---
+
+RC_CONF:
+  clear_tmp_enable: "YES"
+  sendmail_enable: "NO"
+  sendmail_msp_queue_enable: "NO"
+  sendmail_outbound_enable: "NO"
+  sendmail_submit_enable: "NO"
